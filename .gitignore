@@ -1,0 +1,3 @@
+# Root-level files to ignore (some are common files to ignore in any project)
+.env
+unused
