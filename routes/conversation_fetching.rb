@@ -8,9 +8,9 @@ require_relative '../utils/database'
 require_relative '../utils/email'
 
 module ConversationRoutes
-    def self.fetch_conversations(app):
-        content_type :json
+    def self.fetch_conversations(app)
         app.post '/fetch_conversations/?' do 
+            content_type :json
             begin 
                 sent_json = JSON.parse(request.body.read)
             rescue JSON::ParseError => e 
@@ -23,7 +23,7 @@ module ConversationRoutes
             begin 
                 current_date, attachments = Time.now.strftime('%Y-%m-%d'), []
                 fetch_conversations_for(current_time)
-                Dir.foreach("#{ENV['CONVERSATIONS_PATH']}/#{current_date}") |conversation| do 
+                Dir.foreach("#{ENV['CONVERSATIONS_PATH']}/#{current_date}") do |conversation| 
                     next if conversation.match?(/^\./)
                     attachments << {'content' => "#{ENV['CONVERSATIONS_PATH']}/#{current_date}/#{conversation}",
                                     'filename' => conversation, 'disposition' => 'attachment'}
