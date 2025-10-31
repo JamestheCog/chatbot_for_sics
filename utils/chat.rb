@@ -17,8 +17,12 @@ module ChatUtils
         conversation_history.each do |item|
             raise ArgumentError, "There's an illegal item in at least one of the items in `conversation_history`" unless item.keys.include?('role') && item.keys.include?('parts')
             item['parts'].each do |message|
-                raise ArgumentError, "An item in `conversation_history` is missing a `text` parameter." unless message.keys.include?('text')
-                raise ArgumentError, "The provided message needs to be a string." unless message['text'].is_a?(String)
+                unless message.keys.include?('text') || message.keys.include?('inline_data')
+                    raise ArgumentError, "An item in `conversation_history` is missing a `text` or a `inline_data` parameter."
+                end
+                unless message['text'].is_a?(String) || message.keys.include?('inline_data')
+                    raise ArgumentError, "The provided message needs to be a string." 
+                end
             end
         end
         raise ArgumentError, "'num_attempts' needs to be an integer" unless num_attempts.is_a?(Integer)
@@ -37,6 +41,7 @@ module ChatUtils
                 else
                     puts "[INFO] Failed to get response from Gemini's servers - trying again (attempt ##{attempt_count} out of #{num_attempts})"
                     sleep (rand * 2) + 2**attempt_count
+                    attempt_count += 1
                 end
             end
             message_returned.nil? ? "[ERROR] Failed to fetch the model's response!" : message_returned
