@@ -1,5 +1,5 @@
 require 'sinatra/base'
-require 'dotenv/load'
+# require 'dotenv/load'
 require 'securerandom'
 require 'rack/session/cookie'
 
@@ -10,8 +10,8 @@ require_relative 'routes/api'
 require_relative 'routes/conversation_fetching'
 require_relative 'utils/classes/message_logger'
 
-# Load in any environment variables here:
-Dotenv.load!
+# Load in any environment variables here (but only if you're in development):
+# Dotenv.load!
 
 # The application's entry point:
 class App < Sinatra::Base 
