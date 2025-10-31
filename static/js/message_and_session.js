@@ -67,8 +67,10 @@ async function send_message(message, image_url = undefined, img_mimetype = undef
         throw error; 
     } finally {
         SEND_BUTTON.disabled = false;
-        IMAGE_INPUT.disabled = false; 
-        HIDDEN_IMAGE_INPUT.files = '';
+        HIDDEN_IMAGE_INPUT.value = '';
+        IMAGE_INPUT.disabled = false;
+        IMAGE_INPUT.classList.toggle('active', true)
+        SEND_BUTTON.classList.toggle('active', false)
         IMAGE_INPUT.style.cursor = 'pointer';
         SEND_BUTTON.style.cursor = 'pointer';
     }
@@ -114,24 +116,29 @@ const setup_chat_interface = () => {
         let message = USER_INPUT.value.trim();
         let file = HIDDEN_IMAGE_INPUT.files[0];
         let base64_string, img_mimetype;
-        if (!message && !image_input || SEND_BUTTON.disabled) return;
+        if ((!message || !message && !file) || SEND_BUTTON.disabled) return;
 
         // If the user's uploaded a file, then Base64-encode it before sending it over 
         // to the Sinatra app.
         if (file) {
-            let file_reader = new FileReader();
-            file_reader.onload = (event) => {
-                base64_string = event.target.result.split(',')[1];
-            }
-            img_mimetype = file.type
+            let file_data = await new Promise((resolve, reject) => {
+                let reader = new FileReader();
+                reader.onload = (e) => {
+                    base64_string = e.target.result.split(',')[1];
+                    img_mimetype = file.type
+                    resolve({base64_string, img_mimetype})
+                };
+                reader.onerror = (e) => reject(new Error("Couldn't read the file for some reason."));
+                reader.readAsDataURL(file);
+            });
         }
             
         try {
-            USER_INPUT.value = '';
+            USER_INPUT.value = ''; USER_INPUT.disabled = true;
             IMAGE_INPUT.value = '';
             clear_image_preview();
             update_button_state();
-            add_message(message, 'user', image_input); show_typing();
+            add_message(message, 'user', file); show_typing();
             let response = await send_message(message, base64_string, img_mimetype)
             hide_typing()
             add_message(response['returned_message'], 'bot');
@@ -140,7 +147,8 @@ const setup_chat_interface = () => {
             hide_typing();
             alert('Your message failed to be processed by the server; please try sending your message again!');
         } finally {
-            SEND_BUTTON.classList.toggle('active', true)
+            SEND_BUTTON.classList.toggle('active', false)
+            USER_INPUT.disabled = false;
         }
     })
 
@@ -162,13 +170,12 @@ const update_button_state = () => {
     IMAGE_INPUT.classList.toggle('active', !has_image);
     if (has_image) {
         let should_be_active = (has_text && has_image) 
-        console.log(should_be_active)
         IMAGE_INPUT.disabled = true; IMAGE_INPUT.style.cursor = 'not-allowed';
         SEND_BUTTON.classList.toggle('active',  should_be_active)
         SEND_BUTTON.disabled = !should_be_active
     } else {
         SEND_BUTTON.classList.toggle('active',  has_text)
-        SEND_BUTTON.disabled = has_text
+        SEND_BUTTON.disabled = !has_text
         IMAGE_INPUT.disabled = false; IMAGE_INPUT.style.cursor = 'pointer';
     }
 }
@@ -185,8 +192,10 @@ let initialize_reset_button = () => {
             .then(response => {console.info(`[INFO] Status: ${response['message']}`)})
             .catch(error => {
                 console.error(error['message']);
-                alert('The application could not restart the application; do refresh the application to see if anything changes!');
+                alert('The application could not restart the chatting session; do refresh the application to see if anything changes!');
             })
+            SEND_BUTTON.classList.toggle('active', false);
+            IMAGE_INPUT.classList.toggle('active', true);
         } else {
             return;
         }
@@ -204,6 +213,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelector('.attach-button').addEventListener('click', () => {document.querySelector('#image_input').click()})
         initialize_reset_button()
         setup_chat_interface();
+        add_message("Welcome!  Please enter a message to get started!", "bot")
     } catch(error) {
         console.error(`[ERROR] Failed to set up the initial session: ${error}`);
         alert("The application was unable to initialize itself; could you refresh the page after this message?");
