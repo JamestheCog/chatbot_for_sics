@@ -1,4 +1,5 @@
-# A module to contain helper functions pertaining to the database-related functionality of the application:
+# A module to contain helper functions pertaining to the database-related functionality of the application.  Where I specify port = 8860, that's 
+# just from SQLitecloud's default params:
 require 'httparty'
 require 'uri'
 
@@ -16,8 +17,9 @@ module DatabaseUtils
         req.keys.map(&:downcase).include?('error') ? false : true
     end
 
-    # Logs a message to be stored in the SQLitecloud database
-    def store_message_in_cloud(user_id, convo_id, role, message, port_number = 8860)
+    # Logs a message to be stored in the SQLitecloud database.  8860 as a port number is just what was mentioned on the 
+    # documentation.
+    def store_message_in_cloud(message, role, user_id, convo_id, port_number = 8860)
         raise TypeError, "'role' needs to be a string of value 'user' or 'model'." unless role.is_a?(String) && ['user', 'model'].include?(role)
         if ![user_id, convo_id, message, role].map{|x| x.is_a?(String)}.reduce(:&)
             raise TypeError, "'user_id', 'convo_id', 'message', and 'role' need to be strings."
@@ -29,7 +31,7 @@ module DatabaseUtils
                 'Authorization' => "Bearer #{ENV['SQLITECLOUD_CONNECTION_STRING']}" 
             })
             if cols.keys.include?('data')
-                current_time = Time.now.strftime('%Y-%M-%d %H:%M:%S')
+                current_time = Time.now.strftime('%F %T')
                 data = cols['data'].map{|x| x['name']}.zip([user_id, convo_id, role, current_time, message]).to_h
                 response = HTTParty.post("https://#{ENV['SQLITECLOUD_PROJECT_ID']}.g2.sqlite.cloud/v2/weblite/#{ENV['SQLITECLOUD_DB_NAME']}/#{ENV['SQLITECLOUD_MESSAGE_TABLE']}", 
                     headers: {'Accept' => 'application/json', 'Authorization' => "Bearer #{ENV['SQLITECLOUD_CONNECTION_STRING']}",
