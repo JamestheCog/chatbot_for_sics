@@ -23,11 +23,13 @@ module ConversationRoutes
             begin 
                 current_date, attachments = Time.now.strftime('%F'), []
                 fetch_conversations_for(current_date)
-                puts "Done fetching the conversations!"
-                Dir.foreach("#{ENV['CONVERSATIONS_PATH']}/#{current_date}") do |conversation| 
-                    next if conversation.match?(/^\./)
-                    attachments << {'content' => "#{ENV['CONVERSATIONS_PATH']}/#{current_date}/#{conversation}",
-                                    'filename' => conversation, 'disposition' => 'attachment'}
+                Dir.foreach("#{ENV['CONVERSATIONS_PATH']}/#{current_date}") do |user_id| 
+                    next if user_id.match?(/^\./)
+                    Dir.foreach("#{ENV['CONVERSATIONS_PATH']}/#{current_date}/#{user_id}") do |conversation|
+                        next if conversation.match?(/^\./)
+                        attachments << {'content' => "#{ENV['CONVERSATIONS_PATH']}/#{current_date}/#{user_id}/#{conversation}",
+                                        'filename' => conversation, 'disposition' => 'attachment'}
+                    end
                 end
                 send_email(attachments) if attachments.length > 0
                 FileUtils.rm_rf("#{ENV['CONVERSATIONS_PATH']}/#{current_date}")

@@ -71,7 +71,6 @@ module DatabaseUtils
                     writable_data[row['user_id']] << {'role' => row['role'], 'message' => row['message'], 
                                                       'conversation_id' => row['conversation_id'], 'time_messaged' => row['time_messaged']}
                 end 
-                puts date
                 write_convos_to(writable_data, date)
             else
                 raise ArgumentError, "[ERROR] There's no 'data' field in the payload - did the API endpoint change?"
@@ -90,16 +89,14 @@ module DatabaseUtils
         raise TypeError, "'destination_folder' needs to be a string." unless date.is_a?(String)
         raise ArgumentError, "'destination_folder' doesn't exist - is there a typo?" unless Dir.exist?(destination_folder) 
 
-        puts "trying to make a new function now..."
         destination_folder = File.join(destination_folder, date)
         FileUtils.mkdir_p(destination_folder)
-        puts "I'm in this function now!"
         begin
             writing_data.each do |user, convos| 
-                dir_of_interest = destination_folder + "#{user}/"
-                Dir.create(dir_of_interest) unless Dir.exist?(dir_of_interest)
+                dir_of_interest = File.join(destination_folder, user)
+                FileUtils.mkdir_p(dir_of_interest)
                 convos.map{|x| x['conversation_id']}.uniq.each do |convo_id|
-                    File.open(dir_of_interest + "#{convo_id}.txt", 'w') do |file|
+                    File.open(File.join(dir_of_interest, "#{convo_id}.txt"), 'w') do |file|
                         file.puts "=== Conversation ID #{convo_id}'s Transcript ===\n\n"
                         writing_data[user].filter{|x| x['conversation_id'] == convo_id}.sort_by{|x| x['time_messaged']}.each do |message|
                             file.puts "[#{message['role']}, #{message['time_messaged']}]\t#{message['message']}"
