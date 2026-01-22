@@ -33,7 +33,7 @@ class App < Sinatra::Base
     # NB: if we're running this in development, we gotta inject the .env variables 
     #     ourselves.  Otherwise, Render (the hosting service we're using) is gonna
     #     do the injecting for us.
-    Dotenv.load! if Dir.entries('.').include?('.env')
+    # Dotenv.load! if Dir.entries('.').include?('.env')
 
     # Register the routes here before running them below:
     register MainRoutes 
