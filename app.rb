@@ -1,7 +1,7 @@
 require 'sinatra/base'
-# require 'dotenv/load'
 require 'securerandom'
 require 'rack/session/cookie'
+require 'dotenv/load'
 
 # User-defined modules here:
 require_relative 'routes/main'
@@ -9,9 +9,6 @@ require_relative 'routes/misc'
 require_relative 'routes/api'
 require_relative 'routes/conversation_fetching'
 require_relative 'utils/classes/message_logger'
-
-# Load in any environment variables here (but only if you're in development):
-# Dotenv.load!
 
 # The application's entry point:
 class App < Sinatra::Base 
@@ -32,6 +29,11 @@ class App < Sinatra::Base
             :secret => ENV['SESSION_SECRET'] || SecureRandom.uuid,
             :max_age => 8192
     end 
+
+    # NB: if we're running this in development, we gotta inject the .env variables 
+    #     ourselves.  Otherwise, Render (the hosting service we're using) is gonna
+    #     do the injecting for us.
+    Dotenv.load! if Dir.entries('.').include?('.env')
 
     # Register the routes here before running them below:
     register MainRoutes 

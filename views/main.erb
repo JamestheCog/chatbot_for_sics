@@ -23,6 +23,14 @@
             </div>
             <div class = "input-area">
                 <textarea type = "text" id = "user_input" placeholder = "Enter a message here..."> </textarea>
+                <button id="voice_btn" class="voice-button" title="Hold to speak">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+                </button>
                 <input type = "file" id = "image_input" accept = "image/*">
                 <div class = 'image_preview', id = 'image_preview'> </div>
                 <button class = "attach-button">📎</button>
@@ -32,6 +40,7 @@
 
         <script src = '/js/message_and_session.js'> </script>
         <script src = '/js/night_mode.js'> </script>
+        <script src = '/js/voice_input.js'> </script>
         <script src = '/js/additional_input_handlers.js'> </script>
     </body>
 </html>

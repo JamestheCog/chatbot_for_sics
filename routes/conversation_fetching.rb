@@ -17,12 +17,13 @@ module ConversationRoutes
                 halt 400, {message: "failed to process the JSON object: #{e}"}.to_json
             end 
             halt 400, {message: "JSON object is missing the authorization field."}.to_json unless sent_json.keys.include?('authorization')
-            halt 400, {message: "Authorization field is missing a password."}.to_json unless sent_json['authorization'].keys.include?('authorization')
+            halt 400, {message: "Authorization field is missing a password."}.to_json unless sent_json['authorization'].keys.include?('password')
             halt 403, {message: "Incorrect password provided"}.to_json unless sent_json['authorization']['password'] == ENV['MAIL_PASSWORD']
 
             begin 
-                current_date, attachments = Time.now.strftime('%Y-%m-%d'), []
-                fetch_conversations_for(current_time)
+                current_date, attachments = Time.now.strftime('%F'), []
+                fetch_conversations_for(current_date)
+                puts "Done fetching the conversations!"
                 Dir.foreach("#{ENV['CONVERSATIONS_PATH']}/#{current_date}") do |conversation| 
                     next if conversation.match?(/^\./)
                     attachments << {'content' => "#{ENV['CONVERSATIONS_PATH']}/#{current_date}/#{conversation}",
@@ -32,6 +33,7 @@ module ConversationRoutes
                 FileUtils.rm_rf("#{ENV['CONVERSATIONS_PATH']}/#{current_date}")
             rescue StandardError => e 
                 puts "[ERROR] An error happened while trying to send conversations: #{e}"
+                halt 500, {message: e}.to_json
             ensure
                 puts attachments.length > 0 ? "[INFO] Successfully sent the conversations over!" : "[INFO] Nothing to send over for #{current_date}..."
             end

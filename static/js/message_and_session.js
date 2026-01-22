@@ -40,6 +40,7 @@ async function send_message(message, image_url = undefined, img_mimetype = undef
     try {
         SEND_BUTTON.disabled = true;
         IMAGE_INPUT.disabled = true;
+        RECORD_BUTTON.disabled = true;
         SEND_BUTTON.style.cursor = 'not-allowed';
         let response = await fetch('/api/send_message/', {
             method: 'POST', credentials: 'include',
@@ -73,6 +74,7 @@ async function send_message(message, image_url = undefined, img_mimetype = undef
         SEND_BUTTON.classList.toggle('active', false)
         IMAGE_INPUT.style.cursor = 'pointer';
         SEND_BUTTON.style.cursor = 'pointer';
+        RECORD_BUTTON.disabled = false;
     }
 }
 
@@ -176,6 +178,7 @@ const update_button_state = () => {
     } else {
         SEND_BUTTON.classList.toggle('active',  has_text)
         SEND_BUTTON.disabled = !has_text
+        RECORD_BUTTON.disabled = !has_text
         IMAGE_INPUT.disabled = false; IMAGE_INPUT.style.cursor = 'pointer';
     }
 }
@@ -213,7 +216,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelector('.attach-button').addEventListener('click', () => {document.querySelector('#image_input').click()})
         initialize_reset_button()
         setup_chat_interface();
-        add_message("Welcome!  Please enter a message to get started!", "bot")
+        setTimeout(() => add_message("Welcome!  Please enter a message to get started!", "bot"), Math.random() * 1e3 + 1e3)
     } catch(error) {
         console.error(`[ERROR] Failed to set up the initial session: ${error}`);
         alert("The application was unable to initialize itself; could you refresh the page after this message?");

@@ -29,7 +29,7 @@ class MessageLogger
             raise ArgumentError, "img_mimetype is invalid." unless img_mimetype.match?(/image\/(png|jpg)/)
         end
 
-        store_message_in_cloud(@user_id, @conversation_id, role, message)
+        store_message_in_cloud(message, role, @user_id, @conversation_id)
         if !base64_img.nil? && !img_mimetype.nil?
             @messages << {'role' => role, 'parts' => [{'text' => message}, {'inline_data' => {'mime_type' => img_mimetype, 'data' => base64_img}}]}
         else 

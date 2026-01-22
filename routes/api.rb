@@ -19,6 +19,7 @@ module APIRoutes
             session[:created_at] = Time.now.to_i
             session[:message_logger] = MessageLogger.new(session[:user_id], session[:conversation_id])
             puts "[INFO] A new session has been initialized."
+            {code: 200, message: 'session initialized'}.to_json
         end
     end
 

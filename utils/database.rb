@@ -1,7 +1,8 @@
 # A module to contain helper functions pertaining to the database-related functionality of the application.  Where I specify port = 8860, that's 
 # just from SQLitecloud's default params:
 require 'httparty'
-require 'uri'
+require 'erb'
+require 'fileutils'
 
 module DatabaseUtils
     # A module-level function for checking on the datbase's health - just to ensure that everything is up and 
@@ -53,39 +54,46 @@ module DatabaseUtils
     # (NOTE - Friday, 24th November, 2025): I've gone ahead and chunked the second half of this function into a private module method.  That second part's responsible
     #                                       for writing the conversations out into a folder on the server's side (to be sent over to the .env file's specified
     #                                       email address...
-    def fetch_conversations_for(date, database_name)
-        if [date, database_name].map{|x| x.is_a?(String)}.reduce(:&)
-            raise ArgumentError, "'date', 'database_name', 'table_name', and 'api_key' should be strings."
-        end
-
+    def fetch_conversations_for(date)
+        raise ArgumentError, "'date' should be a string." if !date.is_a?(String)
         begin
-            sql_statement = "SELECT * FROM #{ENV['SQLITECLOUD_MESSAGE_TABLE']} WHERE #{ENV['SQLITECLOUD_DATE_COL']} LIKE \"?\";".gsub('*', '%2A')
-            req = HTTParty.get("https://#{ENV['SQLITECLOUD_PROJECT_ID']}.g2.sqlite.cloud/v2/weblite/sql?sql=#{URI.encode_uri_component(sql_statement)}&bind%5B%5D=#{date}&database=#{ENV['SQLITECLOUD_DB_NAME']}", headers: {
-                'Accept' => 'application/json', 
-                'Authorization' => "Bearer #{ENV['SQLITECLOUD_CONNECTION_STRING']}"
+            sql_statement = "SELECT * FROM #{ENV['SQLITECLOUD_MESSAGE_TABLE']} WHERE #{ENV['SQLITECLOUD_DATE_COL']} LIKE ? || '%';"
+            req = HTTParty.get("https://#{ENV['SQLITECLOUD_PROJECT_ID']}.g2.sqlite.cloud/v2/weblite/sql" +
+                               "?sql=#{ERB::Util.url_encode(sql_statement)}" +
+                               "&bind%5B%5D=#{ERB::Util.url_encode(date)}&database=#{ENV['SQLITECLOUD_DB_NAME']}", 
+                headers: {
+                    'Accept' => 'application/json', 
+                    'Authorization' => "Bearer #{ENV['SQLITECLOUD_API_KEY']}"
             })
-            if req.keys.include?('data')
-                writable_data = req['data'].map{|x| x['user_id']}.zip(Array.new(req['data'].length, []))
+            if req.include?('data')
+                writable_data = req['data'].map{|x| x['user_id']}.zip(Array.new(req['data'].length, [])).to_h
                 req['data'].each do |row| 
                     writable_data[row['user_id']] << {'role' => row['role'], 'message' => row['message'], 
                                                       'conversation_id' => row['conversation_id'], 'time_messaged' => row['time_messaged']}
                 end 
-                write_convos_to(req['data'])
+                puts date
+                write_convos_to(writable_data, date)
             else
                 raise ArgumentError, "[ERROR] There's no 'data' field in the payload - did the API endpoint change?"
             end 
         rescue HTTParty::ResponseError => e 
             puts "[ERROR] An HTTP error occurred while writing conversations: #{e.response.code} - #{e.response.message}"
+        rescue StandardError => e
+            puts "Something happened: #{e}"
         end
     end
 
     private 
-    def write_convos_to(writing_data, destination_folder = ENV['CONVERSATIONS_PATH'])
+    def write_convos_to(writing_data, date, destination_folder = ENV['CONVERSATIONS_PATH'])
         raise TypeError, "'writing_data' needs to be a hash." unless writing_data.is_a?(Hash)
         raise TypeError, "'destination_folder' needs to be a string." unless destination_folder.is_a?(String)
+        raise TypeError, "'destination_folder' needs to be a string." unless date.is_a?(String)
         raise ArgumentError, "'destination_folder' doesn't exist - is there a typo?" unless Dir.exist?(destination_folder) 
 
-        destination_folder = destination_folder.match?(/\/$/) ? destination_folder : destination_folder + '/'
+        puts "trying to make a new function now..."
+        destination_folder = File.join(destination_folder, date)
+        FileUtils.mkdir_p(destination_folder)
+        puts "I'm in this function now!"
         begin
             writing_data.each do |user, convos| 
                 dir_of_interest = destination_folder + "#{user}/"
