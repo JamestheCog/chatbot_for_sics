@@ -8,6 +8,7 @@
 
 // Some file-level constants...
 let IMAGE_PREVIEW = document.querySelector('.image_preview');
+const MAX_IMAGE_SIZE = 10 * 1024**2
 
 // Clears out the image preview if the user clicks on the "X" button:
 const clear_image_preview = () => {
@@ -23,6 +24,10 @@ HIDDEN_IMAGE_INPUT.addEventListener('change', function() {
     IMAGE_PREVIEW.innerHTML = '';
     let file = this.files[0]
     if (file) {
+        if (file.size > MAX_IMAGE_SIZE) {
+            alert(`The size of the file uploaded should be no larger than ${MAX_IMAGE_SIZE / 1024**2} MB!`);
+            return;
+        }
         let preview = document.createElement('img');
         preview.src = URL.createObjectURL(file);
         preview.style.maxWidth = '50px';
